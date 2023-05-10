@@ -1,0 +1,215 @@
+﻿@* Edit page for object instance of Gym
+    An object of type Gym is passed to this page from the GymPage and assigned to gymToEdit.
+    The table on this page has its fields bound to the various fields for the object instannce using @Bind-Value
+
+    At the bottom are additional methods used to check if the Gym has any active personal training sessions should the use set the Gym's accountStatus to false.
+
+    If the user clicks on the "Update" button, the various validation methods are used before an SQL query is use to update the database. After completing this or when the user clicks "Cancle", the respective LoadFromDatabase() method is run and the NavigationManager navHelper is used to move the user back the the main GymPage.
+
+    Date: 27 April 2023
+    By: John Holloway
+*@
+
+@page "/editGym"
+
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Diagnostics;
+
+@inject NavigationManager navHelper
+<h3>EditGym</h3>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Field</th>
+            <th>Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Street Address</td>
+            <td><input type="text" @bind="@gymToEdit.Street"/></td>
+        </tr>
+        <tr>
+            <td>City</td>
+            <td><input type="text" @bind="gymToEdit.City"/></td>
+        </tr>
+        <tr>
+            <td>Province</td>
+            <td><InputSelect @bind-Value="@gymToEdit.Province">
+                    <option value="Alberta">Alberta</option>
+                    <option value="British Columbia">British Columbia</option>
+                    <option value="Manitoba">Manitoba</option>
+                    <option value="New Brunswick">New Brunswick</option>
+                    <option value="Newfoundland and Labrador">Newfoundland and Labrador</option>
+                    <option value="Northwest Territories">Northwest Territories</option>
+                    <option value="Nova Scotia">Nova Scotia</option>
+                    <option value="Nunavut">Nunavut</option>
+                    <option value="Ontario">Ontario</option>
+                    <option value="Prince Edward Island">Prince Edward Island</option>
+                    <option value="Quebec">Quebec</option>
+                    <option value="Saskatchewan">Saskatchewan</option>
+                    <option value="Yukon">Yukon</option>
+                </InputSelect>
+            </td>
+        </tr>
+        <tr>
+            <td>Postal Code</td>
+            <td><input type="text" @bind="gymToEdit.Postal" /></td>
+        </tr>
+        <tr>
+            <td>Gym Status</td>
+            <td>
+                <InputSelect @bind-Value="@gymToEdit.GymStatus">
+                    <option value=true>Active</option>
+                    <option value=false>Inactive</option>
+                </InputSelect>
+            </td>
+        </tr>
+    </tbody>
+</table>
+        
+<br />
+<btn class="btn btn-primary" @onclick="dataValidation">Update</btn>&nbsp&nbsp&nbsp
+<btn class="btn btn-primary" @onclick="() => Cancle()">Cancle</btn>
+
+
+
+
+@code {
+    internal static Gym? gymToEdit;
+
+    //validate that fields are entered to update gym.
+    internal void dataValidation()
+    {
+        bool validGym = true;
+        string alertMessage = "";
+
+        if (string.IsNullOrWhiteSpace(gymToEdit.Street))
+        {
+            validGym = false;
+            alertMessage += "Street Address Required";
+        }
+        if (string.IsNullOrWhiteSpace(gymToEdit.City))
+        {
+            validGym = false;
+            alertMessage += "\nCity Required";
+        }
+        if (string.IsNullOrWhiteSpace(gymToEdit.Province))
+        {
+            validGym = false;
+            alertMessage += "\nProvince required.";
+        }
+        if (string.IsNullOrWhiteSpace(gymToEdit.Postal))
+        {
+            validGym = false;
+            alertMessage += "\nPostal Code required.";
+        }
+
+        if (validGym)
+        {
+            //updateGym();
+            checkForAccountStatusChange();
+        }
+        else
+        {
+            Console.WriteLine("Error, cannot update gym", alertMessage, "Okay");
+        }
+    }
+
+     /*
+     *Method checks if account status was changed from ACTIVE to INACTIVE by checking the bool customerToEdit.AccountStatusChanged
+     If this bool is true, it will run activeSessionNotification();
+    */
+    private async Task checkForAccountStatusChange()
+    {
+        if (gymToEdit.GymStatusChanged)
+        {
+            await activeSessionNotification();
+            gymToEdit.GymStatusChanged = false;
+        }
+        else
+        {
+            updateGym();
+        }
+    }
+
+
+
+     /*
+     activeSessionNotification() is used to check if object has any active training sessions.
+     If the object is associated with active training sessions, a prompt will appear asking the user if they want to set the
+     corresponsing training sessions to inactive or ignore the warning.
+
+     The value for var sessionInformation is a tuple assigned by the method it invokes. The method, CheckForActiveSessions sends
+     the Type of the object being edited (in this case "Gym") and also sends this object's GymID. The value returned is a
+     tuple containing two Items.
+     sessionInformation.Item1 is a bool indicating if object has any active personal training sessions
+     sessionInformation.Item2 is a List<Session> with all active Sessions associated with this object.
+
+     If there are not any active sessions associated with this object, Item1 will be FALSE and Item2 will contain an empty List<Session>
+
+    */
+    public async Task activeSessionNotification()
+    {
+        var sessionInformation = SessionService.CheckForActiveSessions(gymToEdit.GetType(), gymToEdit.GymID);
+        //Debug.WriteLine("OnAccountStatusChange() has run completely");
+
+
+
+        if (sessionInformation.Item1 == true && gymToEdit.GymStatus == false)
+        {
+            bool action = true; //await Application.Current.MainPage.DisplayAlert("Warning", $"{gymToEdit.Street} {gymToEdit.City} has active client training sessions. \nDeactivate Active Sessions for this location?", "Deactivate Sessions", "Ignore Warning");
+
+            switch (action)
+            {
+                case true:
+                    {
+                        Debug.WriteLine("Running DeactivateSessions(sessionInformation.Item2);");
+                        Services.SessionService.DeactivateSessions(sessionInformation.Item2);
+                        //Console.WriteLine("Deactivate Sessions Method to be engaged.");
+
+                        Debug.WriteLine("Running updateGym();");
+                        updateGym();
+
+                        break;
+                    }
+                case false:
+                    {
+                        updateGym();
+                        break;
+                    }
+
+            }
+
+
+        }
+        else
+        {
+            updateGym();
+        }
+    }
+
+
+
+
+
+
+
+
+
+    internal void updateGym()
+    {
+        Services.GymService.UpdateRecord(gymToEdit.GymID, gymToEdit.Street, gymToEdit.City, gymToEdit.Province, gymToEdit.Postal, gymToEdit.GymStatus);
+        Console.WriteLine("Note:", $"Record updated for {gymToEdit.Street} {gymToEdit.City}", "Okay");
+
+        navHelper.NavigateTo("gym");
+    }
+
+    internal void Cancle()
+    {
+        Services.GymService.LoadFromDatabase();
+        navHelper.NavigateTo("gym");
+    }
+
+}

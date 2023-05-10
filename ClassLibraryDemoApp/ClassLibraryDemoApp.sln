@@ -3,15 +3,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33414.496
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleUI", "ConsoleUI\ConsoleUI.csproj", "{00F73A7D-286E-4719-B9BA-487FB2ABB972}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleUI", "ConsoleUI\ConsoleUI.csproj", "{00F73A7D-286E-4719-B9BA-487FB2ABB972}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FrameworkLibrary", "FrameworkLibrary\FrameworkLibrary.csproj", "{476DBC76-3365-43C0-BFB0-200756FEE75B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreLibrary", "NETLibrary\CoreLibrary.csproj", "{3874F7DE-EC62-4F89-8DC6-99C26E8F93BF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CoreLibrary", "NETLibrary\CoreLibrary.csproj", "{3874F7DE-EC62-4F89-8DC6-99C26E8F93BF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Homework", "Homework\Homework.csproj", "{527CC45A-476C-4FFE-82C7-D83C26462649}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Homework", "Homework\Homework.csproj", "{527CC45A-476C-4FFE-82C7-D83C26462649}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NET_and_Standard_Library", "NET_and_Standard_Library\NET_and_Standard_Library.csproj", "{53399011-0E0D-44D6-B1FF-52E330C91C95}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NET_and_Standard_Library", "NET_and_Standard_Library\NET_and_Standard_Library.csproj", "{53399011-0E0D-44D6-B1FF-52E330C91C95}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NewFolder1", "NewFolder1", "{F3809F3C-A3ED-4EF1-928E-6B6FE1F302F9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,0 +1,71 @@
+﻿@* Main page for list of Staff
+    It displays a table and creates rows from List<Staff> customers found in the file Services.StaffServices.cs
+    Each row will have a end button that will pass the specific Staff instance for that row to the EditStaff page
+
+    Date: 27 April 2023
+    By: John Holloway
+*@
+
+@page "/staff"
+
+@inject NavigationManager navHelper
+
+<h1>Staff Members</h1>
+
+<btn class="btn btn-primary" @onclick="() => NewStaff()">New Staff Member</btn>
+
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>First name</th>
+            <th>Last name</th>
+            <th>Phone number</th>
+            <th>Email</th>
+            <th>Salary</th>
+            <th>Gym Location</th>
+            <th>Position</th>
+            <th>Employment Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (Staff staff in StaffServices.staffs)
+        {
+
+            <tr>
+                <td>@staff.FirstName</td>
+                <td>@staff.LastName</td>
+                <td>@String.Format("{0:(###) ###-####}", long.Parse(staff.PhoneNumber))</td>
+                <td>@staff.Email</td>
+                <td>@String.Format("{0:C}", staff.Salary)</td>
+                <td>@gymLocation(staff.GymID)</td>
+                <td>@staff.Position</td>
+                <td>@staff.AccountStatus</td>
+                <button class="btn-outline-primary" @onclick="() => LoadEditPage(staff)">Edit</button>
+            </tr>
+        }
+
+    </tbody>
+
+</table>
+
+
+@code {
+
+    internal void LoadEditPage(Staff staffToEdit)
+    {
+        EditStaff.staffToEdit = staffToEdit;
+        navHelper.NavigateTo("editstaff");
+    }
+
+    internal void NewStaff()
+    {
+        navHelper.NavigateTo("newstaff");
+    }
+
+    internal string gymLocation(int gymID)
+    {
+        return Services.GymService.gymDictionary[gymID];
+    }
+
+}

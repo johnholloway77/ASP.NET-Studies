@@ -1,0 +1,64 @@
+﻿@* Main page for list of Trainer
+    It displays a table and creates rows from List<Trainer> customers found in the file Services.TrainerServices.cs
+    Each row will have a end button that will pass the specific Trainer instance for that row to the EditTrainer page
+
+    Date: 27 April 2023
+    By: John Holloway
+*@
+
+@page "/trainer"
+
+@inject NavigationManager navHelper
+
+<h1>Personal Trainers</h1>
+
+<btn class="btn btn-primary" @onclick="() => NewTrainer()">New Personal Trainer</btn>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>First name</th>
+            <th>Last name</th>
+            <th>Phone number</th>
+            <th>Email</th>
+            <th>Base Salary</th>
+            <th>Hourly Fee</th>
+            <th>Certification</th>
+            <th>Employment Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (Trainer trainer in Services.TrainerServices.trainers)
+        {
+
+            <tr>
+                <td>@trainer.FirstName</td>
+                <td>@trainer.LastName</td>
+                <td>@String.Format("{0:(###) ###-####}", long.Parse(trainer.PhoneNumber))</td>
+                <td>@trainer.Email</td>
+                <td>@String.Format("{0:C}", trainer.BaseSalary)</td>
+                <td>@String.Format("{0:C}", trainer.HourlyFee)</td>
+                <td>@trainer.Certification</td>
+                <td>@trainer.AccountStatus</td>
+                <button class="btn-outline-primary" @onclick="() => LoadEditPage(trainer)">Edit</button>
+            </tr>
+        }
+
+    </tbody>
+
+</table>
+
+
+@code {
+
+    internal void LoadEditPage(Trainer trainerToEdit)
+    {
+        EditTrainer.trainerToEdit = trainerToEdit;
+        navHelper.NavigateTo("edittrainer");
+    }
+
+    internal void NewTrainer()
+    {
+        navHelper.NavigateTo("newtrainer");
+    }
+}

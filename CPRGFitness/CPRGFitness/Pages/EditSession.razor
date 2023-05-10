@@ -1,0 +1,116 @@
+﻿@* Edit page for object instance of Session
+    An object of type Session is passed to this page from the SessionPage and assigned to sessionToEdit.
+    The table on this page has its fields bound to the various fields for the object instannce using @Bind-Value
+
+    Unlike NewSession, this page allows the user to select inactive Customers/Gyms/Trainers when assigning them to the Session instance. This was done to incase the user wanted to correct a past training session record and maintain data integrity. . 
+
+    Unlike other Edit pages, this page does not have data validation methods as the data used for Sessions is compiled from the other objects, which themselves have already undergone data validation.
+
+    If the user clicks on the "Update" button an SQL query is use to update the database. After completing this or when the user clicks "Cancle", the respective LoadFromDatabase() method is run and the NavigationManager navHelper is used to move the user back the the main SessionPage.
+
+    Date: 27 April 2023
+    By: John Holloway
+*@
+
+@page "/editsession"
+
+@using Microsoft.AspNetCore.Components.Forms
+
+
+@inject NavigationManager navHelper
+
+<h3>Edit Training Session</h3>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Field</th>
+            <th>Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Session ID</td>
+            <td>@sessionToEdit.SessionID</td>
+        </tr>
+        <tr>
+            <td>Personal Trainer</td>
+            <td>
+                <InputSelect @bind-Value="@sessionToEdit.TrainerID">
+                    @foreach (Trainer trainer in Services.TrainerServices.trainers)
+                    {
+                        <option value=@trainer.TrainerId>@trainer.FirstName @trainer.LastName</option>
+                    }
+                </InputSelect>
+            </td>
+        </tr>    
+        <tr>
+            <td>Customer Name</td>
+            <td>
+                <InputSelect @bind-Value="@sessionToEdit.CustID">
+                    @foreach (Customer customer in Services.CustomerServices.customers)
+                    {
+                        <option value=@customer.CustID>@customer.FirstName @customer.LastName</option>
+                    }
+                </InputSelect>
+            </td>
+        </tr>
+        <tr>
+            <td>Gym Location</td>
+            <td>
+                <InputSelect @bind-Value="@sessionToEdit.GymID">
+                    @foreach (Gym gym in Services.GymService.gyms)
+                    {
+                        <option value=@gym.GymID>@gymLocation(gym.GymID)</option>
+                    }
+                </InputSelect>
+            </td>
+        </tr>
+        <tr>
+            <td>Session Date</td>
+            <td><input type="date" @bind-value="@sessionToEdit.SessionDate" /></td>
+        </tr>
+        <tr>
+            <td>Session Time</td>
+            <td><input type="time" @bind-value="@sessionToEdit.SessionDate" /></td>
+        </tr>
+        <tr>
+            <td>Session Status</td>
+            <td><InputSelect @bind-Value="@sessionToEdit.SessionStatus">
+                <option value=true>Active</option>
+                <option value=false>Inactive</option>
+            </InputSelect></td>
+        </tr>
+    </tbody>
+</table>
+
+<br />
+<btn class="btn btn-primary" @onclick="() => UpdateSession()">Update</btn>&nbsp&nbsp&nbsp
+<btn class="btn btn-primary" @onclick="() => Cancle()">Cancle</btn>
+
+
+@code {
+    internal static Session sessionToEdit;
+
+    private void UpdateSession()
+    {
+        Services.SessionService.UpdateRecord(sessionToEdit.SessionID, sessionToEdit.TrainerID, sessionToEdit.CustID, sessionToEdit.GymID, sessionToEdit.SessionDate, sessionToEdit.SessionStatus);
+
+        Console.WriteLine("Success", "Training session has been updated", "Okay");
+
+        Services.SessionService.LoadFromDatabase();
+        navHelper.NavigateTo("session");
+
+    }
+
+    private void Cancle()
+    {
+        Services.SessionService.LoadFromDatabase();
+        navHelper.NavigateTo("session");
+    }
+
+    private string gymLocation(int gymID)
+    {
+        return Services.GymService.gymDictionary[gymID];
+    }
+}

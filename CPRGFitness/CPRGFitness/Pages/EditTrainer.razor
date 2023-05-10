@@ -1,0 +1,241 @@
+﻿@* Edit page for object instance of Gym
+    An object of type Gym is passed to this page from the GymPage and assigned to gymToEdit.
+    The table on this page has its fields bound to the various fields for the object instannce using @Bind-Value
+
+    At the bottom are additional methods used to check if the gym has any active personal training sessions should the use set the Gym's accountStatus to false.
+
+    If the user clicks on the "Update" button, the various validation methods are used before an SQL query is use to update the database. After completing this or when the user clicks "Cancle", the respective LoadFromDatabase() method is run and the NavigationManager navHelper is used to move the user back the the main GymPage.
+
+    Date: 27 April 2023
+    By: John Holloway
+*@
+
+@page "/edittrainer"
+
+@using System.Diagnostics;
+
+@inject NavigationManager navHelper
+
+<h3>Edit Personal Trainer</h3>
+
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Field</th>
+            <th>Value</th>
+        </tr>
+    </thead>
+    <tbody>
+
+        <tr>
+            <td>Trainer ID</td>
+            <td>@trainerToEdit.TrainerId</td>
+        </tr>
+        <tr>
+            <td>First name</td>
+            <td><input type="text" @bind="@trainerToEdit.FirstName" /></td>
+
+        </tr>
+        <tr>
+            <td>Last name</td>
+            <td><input type="text" @bind="@trainerToEdit.LastName" /></td>
+        </tr>
+        <tr>
+            <td>Phone Number</td>
+            <td><input type="tel" @bind="@trainerToEdit.PhoneNumber" maxlength="10" /></td>
+        </tr>
+        <tr>
+            <td>Email</td>
+            <td><input type="email" @bind="@trainerToEdit.Email" /></td>
+        </tr>
+        <tr>
+            <td>Base Salary</td>
+            <td><InputNumber @bind-Value="@trainerToEdit.BaseSalary" /></td>
+        </tr>
+        <tr>
+            <td>Hourly Fee</td>
+            <td><InputNumber @bind-Value="@trainerToEdit.HourlyFee" /></td>
+        </tr>
+        <tr>
+            <td>Certification</td>
+            <td><InputText @bind-Value="@trainerToEdit.Certification" /></td>
+        </tr>
+
+        <tr>
+            <td>Employment Status</td>
+            <td>
+                <InputSelect @bind-Value="@trainerToEdit.AccountStatus">
+                    <option value=true>Active</option>
+                    <option value=false>Inactive</option>
+                </InputSelect>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<br />
+<btn class="btn btn-primary" @onclick="dataValidation">Update</btn>&nbsp&nbsp&nbsp
+<btn class="btn btn-primary" @onclick="() => Cancle()">Cancle</btn>
+
+
+
+
+@code {
+    internal static Trainer trainerToEdit;
+
+
+    //validate that fields are entered to update Personal Trainer.
+    internal void dataValidation()
+    {
+        bool validStaff = true;
+        long x;
+        int y;
+        string alertMessage = "";
+
+        if (string.IsNullOrWhiteSpace(trainerToEdit.FirstName))
+        {
+            validStaff = false;
+            alertMessage += "Firstname Required";
+        }
+        if (string.IsNullOrWhiteSpace(trainerToEdit.LastName))
+        {
+            validStaff = false;
+            alertMessage += "\nLastname Required";
+        }
+        if (string.IsNullOrWhiteSpace(trainerToEdit.PhoneNumber))
+        {
+            validStaff = false;
+            alertMessage += "\nPhone number required.";
+        }
+        if (trainerToEdit.PhoneNumber.Length < 10)
+        {
+            validStaff = false;
+            alertMessage += "\nPhone number must contain 10 digits";
+        }
+        if (!long.TryParse(trainerToEdit.PhoneNumber, out x))
+        {
+            validStaff = false;
+            alertMessage += "\nPhone number can only contain numerical values";
+        }
+        if (string.IsNullOrWhiteSpace(trainerToEdit.Email))
+        {
+            validStaff = false;
+            alertMessage += "\nEmail address required.";
+        }
+        if (trainerToEdit.BaseSalary == null)
+        {
+            validStaff = false;
+            alertMessage += "\nSalary required.";
+        }
+        if (string.IsNullOrWhiteSpace(trainerToEdit.Certification))
+        {
+            validStaff = false;
+            alertMessage += "\nCertification(s) required.";
+        }
+        if (validStaff)
+        {
+            checkForAccountStatusChange();
+            //updateTrainer();
+        }
+        else
+        {
+            Console.WriteLine("Error, cannot update Personal Trainer", alertMessage, "Okay");
+        }
+    }
+
+     /*
+     *Method checks if account status was changed from ACTIVE to INACTIVE by checking the bool customerToEdit.AccountStatusChanged
+     If this bool is true, it will run activeSessionNotification();
+    */
+    private async Task checkForAccountStatusChange()
+    {
+        if (trainerToEdit.AccountStatusChanged)
+        {
+            await activeSessionNotification();
+            trainerToEdit.AccountStatusChanged = false;
+        }
+        else
+        {
+            updateTrainer();
+        }
+    }
+
+
+     /*
+     activeSessionNotification() is used to check if object has any active training sessions.
+     If the object is associated with active training sessions, a prompt will appear asking the user if they want to set the
+     corresponsing training sessions to inactive or ignore the warning.
+
+     The value for var sessionInformation is a tuple assigned by the method it invokes. The method, CheckForActiveSessions sends
+     the Type of the object being edited (in this case "Trainer") and also sends this object's TrainerID. The value returned is a
+     tuple containing two Items.
+     sessionInformation.Item1 is a bool indicating if object has any active personal training sessions
+     sessionInformation.Item2 is a List<Session> with all active Sessions associated with this object.
+
+     If there are not any active sessions associated with this object, Item1 will be FALSE and Item2 will contain an empty List<Session>
+
+    */
+    public async Task activeSessionNotification()
+    {
+        var sessionInformation = SessionService.CheckForActiveSessions(trainerToEdit.GetType(), trainerToEdit.TrainerId);
+        //Debug.WriteLine("OnAccountStatusChange() has run completely");
+
+
+
+        if (sessionInformation.Item1 == true && trainerToEdit.AccountStatus == false)
+        {
+            bool action = true; //await Application.Current.MainPage.DisplayAlert("Warning", $"{trainerToEdit.FirstName} {trainerToEdit.LastName} has active client training sessions. \nDeactivate Active Sessions for Trainer?", "Deactivate Sessions", "Ignore Warning");
+
+            switch (action)
+            {
+                case true:
+                    {
+                        Debug.WriteLine("Running DeactivateSessions(sessionInformation.Item2);");
+                        Services.SessionService.DeactivateSessions(sessionInformation.Item2);
+                        //Console.WriteLine("Deactivate Sessions Method to be engaged.");
+
+                        Debug.WriteLine("Running updateTrainer();");
+                        updateTrainer();
+
+                        break;
+                    }
+                case false:
+                    {
+                        updateTrainer();
+                        break;
+                    }
+
+            }
+
+
+        }
+        else
+        {
+            updateTrainer();
+        }
+    }
+
+
+
+
+
+
+    internal void updateTrainer()
+    {
+
+        Services.TrainerServices.UpdateRecord(trainerToEdit.TrainerId, trainerToEdit.FirstName, trainerToEdit.LastName, trainerToEdit.PhoneNumber, trainerToEdit.Email, trainerToEdit.BaseSalary, trainerToEdit.HourlyFee, trainerToEdit.Certification, trainerToEdit.AccountStatus);
+
+        Console.WriteLine("Note:", $"Trainer record updated for {trainerToEdit.FirstName} {trainerToEdit.LastName}", "Okay");
+
+        Services.TrainerServices.LoadFromDatabase();
+        navHelper.NavigateTo("trainer");
+    }
+
+
+    internal void Cancle()
+    {
+        Services.TrainerServices.LoadFromDatabase();
+        navHelper.NavigateTo("trainer");
+    }
+}

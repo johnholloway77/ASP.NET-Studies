@@ -1,0 +1,93 @@
+﻿@* Main page for list of personal training session 
+    It displays a table and creates rows from List<Session> customers found in the file Services.SessionServices.cs
+    Each row will have a end button that will pass the specific Session instance for that row to the EditSession page
+
+    Date: 27 April 2023
+    By: John Holloway
+*@
+
+@page "/session"
+
+@inject NavigationManager navHelper
+
+<h1>Personal Training Sessions</h1>
+
+<btn class="btn btn-primary" @onclick="() => newSession()">New Training Session</btn>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Personal Trainer</th>
+            <th>Customer Name</th>
+            <th>Gym Location</th>
+            <th>Session Date</th>
+            <th>Session Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(Session session in SessionService.sessions)
+        {
+            <tr>
+                <td>@personalTrainer(session.TrainerID)</td>
+                <td>@customerName(session.CustID)</td>
+                <td>@gymLocation(session.GymID)</td>
+                <td>@session.SessionDate</td>
+                <td>@session.SessionStatus</td>
+                <td><btn class="btn btn-primary" @onclick="() => editSession(session)">Edit</btn></td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+
+
+@code {
+
+    private void newSession()
+    {
+        navHelper.NavigateTo("newsession");
+    }
+
+    private void editSession(Session sessionToEdit)
+    {
+        navHelper.NavigateTo("editsession");
+        EditSession.sessionToEdit = sessionToEdit;
+    }
+
+    private string personalTrainer(int trainerID)
+    {
+        try{
+            return Services.TrainerServices.trainerDictionary[trainerID];
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return $"trainerID: {trainerID}";
+        }
+    }
+
+    private string customerName(int custID)
+    {
+        try
+        {
+            return Services.CustomerServices.customerDictionary[custID];
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return $"custID: {custID}";
+        }
+    }
+
+    private string gymLocation(int gymID)
+    {
+        try
+        {
+            return Services.GymService.gymDictionary[gymID];
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return $"gymID: {gymID}";
+        }
+    }
+
+}

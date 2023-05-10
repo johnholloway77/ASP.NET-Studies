@@ -1,0 +1,233 @@
+﻿@* Edit page for object instance of Customer
+    An object of type Customer is passed to this page from the CustomerPage and assigned to customerToEdit. 
+    The table on this page has its fields bound to the various fields for the object instannce using @Bind-Value
+    
+    At the bottom are additional methods used to check if the customer has any active personal training sessions should the use set the customer's accountStatus to false.
+
+    If the user clicks on the "Update" button, the various validation methods are used before an SQL query is use to update the database. After completing this or when the user clicks "Cancle", the respective LoadFromDatabase() method is run and the NavigationManager navHelper is used to move the user back the the main CustomerPage.
+
+    Date: 27 April 2023
+    By: John Holloway
+*@
+
+@page "/editCustomer"
+
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Diagnostics;
+
+@inject NavigationManager navHelper
+
+
+<body>
+<h3>Edit Customer</h3>
+
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Field</th>
+            <th>Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        
+        <tr>
+            <td>First name</td>
+            <td><input type="text" @bind="@customerToEdit.FirstName"/></td>
+            
+        </tr>
+        <tr>
+            <td>Last name</td>
+                <td><input type="text" @bind="@customerToEdit.LastName"/></td>
+        </tr>
+        <tr>
+            <td>Phone Number</td>
+                <td><input type="text"  @bind="@customerToEdit.PhoneNumber" maxlength="10"/></td>
+        </tr>
+        <tr>
+            <td>Email</td>
+                <td><input type="email" @bind="@customerToEdit.Email" /></td>
+        </tr>
+        <tr>
+            <td>Birthday</td>
+                <td><InputDate @bind-Value="@customerToEdit.DateOfBirth" /></td>
+        </tr>
+        <tr>
+            <td>Membership Type</td>
+            <td>
+                <InputSelect @bind-Value="@customerToEdit.MembershipType">
+                    <option value="Annual">Annual</option>
+                    <option value="Monthly">Monthly</option>
+                    <option value="Trial">30-Day - Trial</option>
+                </InputSelect>
+            </td>
+        </tr>
+        <tr>
+            <td>Account Status</td>
+                <td>
+                <InputSelect @bind-Value="@customerToEdit.AccountStatus">
+                    <option value=true>Active</option>
+                    <option value=false>Inactive</option>
+                </InputSelect>
+                </td>
+        </tr>
+    </tbody>
+</table>
+
+<br />
+<btn class="btn btn-primary" @onclick="dataValidation">Update</btn>&nbsp&nbsp&nbsp
+<btn class="btn btn-primary" @onclick="() => Cancle()">Cancle</btn>
+
+
+</body>
+
+@code {
+
+    public static Customer? customerToEdit;
+
+
+    //validate that fields are entered to update customer.
+    private void dataValidation()
+    {
+        bool validCustomer = true;
+        long x;
+        string alertMessage = "";
+
+        if (string.IsNullOrWhiteSpace(customerToEdit.FirstName))
+        {
+            validCustomer = false;
+            alertMessage += "Firstname Required";
+        }
+        if (string.IsNullOrWhiteSpace(customerToEdit.LastName))
+        {
+            validCustomer = false;
+            alertMessage += "\nLastname Required";
+        }
+        if (string.IsNullOrWhiteSpace(customerToEdit.PhoneNumber))
+        {
+            validCustomer = false;
+            alertMessage += "\nPhone number required.";
+        }
+        if(customerToEdit.PhoneNumber.Length < 10)
+        {
+            validCustomer = false;
+            alertMessage += "\nPhone number must contain 10 digits";
+        }
+        if (!long.TryParse(customerToEdit.PhoneNumber, out x))
+        {
+            validCustomer = false;
+            alertMessage += "\nPhone number can only contain numerical values";
+        }
+        if (string.IsNullOrWhiteSpace(customerToEdit.Email))
+        {
+            validCustomer = false;
+            alertMessage += "\nEmail address required.";
+        }
+
+
+        if (validCustomer)
+        {
+            checkForAccountStatusChange();
+            //updateCustomer();
+        }
+        else
+        {
+            Console.WriteLine("Error, cannot update customer", alertMessage, "Okay");
+        }
+    }
+
+     /*
+     *Method checks if account status was changed from ACTIVE to INACTIVE by checking the bool customerToEdit.AccountStatusChanged
+     If this bool is true, it will run activeSessionNotification();
+    */
+    private async Task checkForAccountStatusChange()
+    {
+        if (customerToEdit.AccountStatusChanged)
+        {
+            await activeSessionNotification();
+            customerToEdit.AccountStatusChanged = false;
+        }
+        else
+        {
+            updateCustomer();
+        }
+    }
+
+     /*
+     activeSessionNotification() is used to check if object has any active training sessions.
+     If the object is associated with active training sessions, a prompt will appear asking the user if they want to set the
+     corresponsing training sessions to inactive or ignore the warning.
+
+     The value for var sessionInformation is a tuple assigned by the method it invokes. The method, CheckForActiveSessions sends
+     the Type of the object being edited (in this case "Customer") and also sends this object's CustID. The value returned is a
+     tuple containing two Items.
+     sessionInformation.Item1 is a bool indicating if object has any active personal training sessions
+     sessionInformation.Item2 is a List<Session> with all active Sessions associated with this object.
+
+     If there are not any active sessions associated with this object, Item1 will be FALSE and Item2 will contain an empty List<Session>
+
+    */
+    public async Task activeSessionNotification()
+    {
+
+
+        var sessionInformation = SessionService.CheckForActiveSessions(customerToEdit.GetType(), customerToEdit.CustID);
+        //Debug.WriteLine("OnAccountStatusChange() has run completely");
+
+
+
+        if (sessionInformation.Item1 == true && customerToEdit.AccountStatus == false)
+        {
+            bool action = true; //await Application.Current.MainPage.DisplayAlert("Warning", $"{customerToEdit.FirstName} {customerToEdit.LastName} has active training sessions. \nDeactivate Active Sessions for Customer?", "Deactivate Sessions", "Ignore Warning");
+
+            switch (action)
+            {
+                case true:
+                    {
+                        Debug.WriteLine("Running DeactivateSessions(sessionInformation.Item2);");
+                        Services.SessionService.DeactivateSessions(sessionInformation.Item2);
+                        //Console.WriteLine("Deactivate Sessions Method to be engaged.");
+
+                        Debug.WriteLine("Running updateCustomer();");
+                        updateCustomer();
+
+                        break;
+                    }
+                case false:
+                    {
+                        updateCustomer();
+                        break;
+                    }
+
+            }
+
+
+        }
+        else
+        {
+            updateCustomer();
+        }
+    }
+
+
+    private void updateCustomer()
+    {        
+
+        Services.CustomerServices.UpdateRecord(customerToEdit.CustID, customerToEdit.FirstName, customerToEdit.LastName, customerToEdit.PhoneNumber, customerToEdit.Email, customerToEdit.DateOfBirth, customerToEdit.MembershipType, customerToEdit.AccountStatus);
+
+        Console.WriteLine("Note:", $"Customer record updated for {customerToEdit.FirstName} {customerToEdit.LastName}", "Okay");
+
+        Services.CustomerServices.LoadFromDatabase();
+        navHelper.NavigateTo("customer");
+    }
+
+    private void Cancle()
+    {
+        Services.CustomerServices.LoadFromDatabase();
+        navHelper.NavigateTo("customer");
+    }
+
+
+
+}
+
