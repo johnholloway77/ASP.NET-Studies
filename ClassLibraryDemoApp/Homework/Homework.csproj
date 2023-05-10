@@ -8,8 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\FrameworkLibrary\FrameworkLibrary.csproj" />
-    <ProjectReference Include="..\NETLibrary\CoreLibrary.csproj" />
+    <ProjectReference Include="..\NET_and_Standard_Library\NET_and_Standard_Library.csproj" />
   </ItemGroup>
 
 </Project>
